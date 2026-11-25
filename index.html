@@ -7,6 +7,87 @@
     <meta name="theme-color" content="#17145d">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>ZS Engineers & Contractors — Invoice Generator</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="title" content="ZS Engineers & Contractors — Invoice Generator">
+    <meta name="description" content="ZS Engineers & Contractors — Invoice Generator">
+    <meta name="keywords" content="invoice, zs, engineers, contractors, generator, billing, gst, india">
+    <meta name="author" content="ZS Engineers & Contractors">
+    <meta name="robots" content="index, follow">
+    <meta name="language" content="English">
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://burairabs.github.io/zs-invoice-generator">
+    <!-- Theme & Browser Colors -->
+    <meta name="theme-color" content="#17145d">
+    <meta name="color-scheme" content="light dark">
+
+    <!-- Favicon & Icons -->
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+
+    <!-- Open Graph / Facebook / WhatsApp / LinkedIn -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="ZS Engineers & Contractors — Invoice Generator">
+    <meta property="og:description" content="ZS Engineers & Contractors — Invoice Generator">
+    <meta property="og:url" content="https://burairabs.github.io/zs-invoice-generator">
+    <meta property="og:site_name" content="ZS Engineers & Contractors — Invoice Generator">
+    <meta property="og:image" content="https://raw.githubusercontent.com/burairabs/zs-invoice-generator/main/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="ZS Engineers & Contractors — Invoice Generator">
+    <meta property="og:locale" content="en_US">
+
+    <!-- PWA / Mobile -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="ZS Engineers & Contractors — Invoice Generator">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+    <!-- Microsoft Tiles -->
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="msapplication-TileImage" content="/mstile-144x144.png">
+
+    <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://burairabs.github.io/zs-invoice-generator/#organization",
+        "name": "ZS Engineers & Contractors",
+        "url": "https://burairabs.github.io/zs-invoice-generator/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://burairabs.github.io/zs-invoice-generator/logo.png",
+          "width": 512,
+          "height": 512
+        },
+        "image": "https://raw.githubusercontent.com/burairabs/zs-invoice-generator/main/og-image.png",
+        "sameAs": [
+          "https://www.facebook.com/yourbrand",
+          "https://www.instagram.com/yourbrand",
+          "https://www.linkedin.com/company/yourbrand",
+          "https://x.com/yourbrand"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://burairabs.github.io/zs-invoice-generator/#website",
+        "url": "https://burairabs.github.io/zs-invoice-generator/",
+        "name": "ZS Engineers & Contractors — Invoice Generator",
+        "publisher": {
+          "@id": "https://burairabs.github.io/zs-invoice-generator/#organization"
+        },
+        "inLanguage": "en"
+      }
+    ]
+  }
+  </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -1139,8 +1220,43 @@
             ["Table", 18000], ["Track Light (9pc)", 26000], ["Labour Charges", 10000], ["AC Belt", 4000], ["Racks (5pc)", 50000],
         ].map(([desc, amt]) => ({ id: uid(), desc, amt }));
 
-        const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
-        const lsSet = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) { } };
+        const STORAGE_KEY = "zs_invoice_draft_v1";
+
+        const lsGet = k => {
+            try { return localStorage.getItem(k); }
+            catch (e) { return null; }
+        };
+
+        const lsSet = (k, v) => {
+            try {
+                v == null
+                    ? localStorage.removeItem(k)
+                    : localStorage.setItem(k, v);
+            } catch (e) { }
+        };
+
+        const loadDraft = () => {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (!saved) return null;
+
+                const data = JSON.parse(saved);
+
+                if (!data || typeof data !== "object") return null;
+
+                return {
+                    inv: {
+                        ...INITIAL_INV,
+                        ...(data.inv || {})
+                    },
+                    items: Array.isArray(data.items)
+                        ? data.items
+                        : INITIAL_ITEMS
+                };
+            } catch (e) {
+                return null;
+            }
+        };
 
         const money = n => Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         const moneyUS = n => Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -1321,8 +1437,15 @@
 
         /* ================= App ================= */
         function App() {
-            const [inv, setInv] = useState(INITIAL_INV);
-            const [items, setItems] = useState(INITIAL_ITEMS);
+            const [initialDraft] = useState(() => loadDraft());
+
+            const [inv, setInv] = useState(
+                () => initialDraft?.inv || INITIAL_INV
+            );
+
+            const [items, setItems] = useState(
+                () => initialDraft?.items || INITIAL_ITEMS
+            );
             const [focusId, setFocusId] = useState(null);
             const [tab, setTab] = useState("edit");
             const [sheet, setSheet] = useState(false);
@@ -1423,6 +1546,53 @@
             const invoiceProps = { inv, calc, fmt, bg, top: lhTop, height: lhHeight };
             const spinner = <span className="spin" />;
 
+            const clearFields = () => {
+                const confirmed = window.confirm(
+                    "Are you sure you want to clear the current invoice?\n\n" +
+                    "All invoice details and items will be reset."
+                );
+
+                if (!confirmed) return;
+
+                // Reset invoice details
+                setInv({ ...INITIAL_INV });
+
+                // Restore default invoice items
+                setItems(
+                    INITIAL_ITEMS.map(item => ({
+                        ...item,
+                        id: uid()
+                    }))
+                );
+
+                // Clear saved draft
+                try {
+                    localStorage.removeItem(STORAGE_KEY);
+                } catch (e) { }
+
+                setFocusId(null);
+                setSheet(false);
+                setTab("edit");
+
+                showToast("Invoice cleared. Fresh invoice started.");
+            };
+
+            // Automatically save invoice whenever data changes
+            useEffect(() => {
+                try {
+                    localStorage.setItem(
+                        STORAGE_KEY,
+                        JSON.stringify({
+                            inv,
+                            items,
+                            savedAt: new Date().toISOString()
+                        })
+                    );
+                } catch (e) {
+                    console.warn("Could not save invoice:", e);
+                }
+            }, [inv, items]);
+
             return (
                 <>
                     <div className="shell">
@@ -1433,6 +1603,15 @@
                                 <small>ZS Engineers & Contractors · No. {inv.number}</small>
                             </div>
                             <div className="desk-only">
+                                <button
+                                    className="abtn"
+                                    type="button"
+                                    onClick={clearFields}
+                                    disabled={!!busy}
+                                >
+                                    <Icon n="reset" />
+                                    Clear Fields
+                                </button>
                                 <button className="abtn solid" disabled={!!busy} onClick={() => doExport("pdf")}>{busy === "pdf" ? spinner : <Icon n="download" />} Download PDF</button>
                                 <button className="abtn" disabled={!!busy} onClick={() => doExport("png")}>{busy === "png" ? spinner : <Icon n="image" />} Image</button>
                                 <button className="abtn" onClick={doPrint}><Icon n="print" /> Print</button>
@@ -1557,6 +1736,19 @@
                                 <div className="sheet" role="dialog" aria-label="Export invoice">
                                     <div className="grip" />
                                     <h3>Export invoice</h3>
+                                    <button
+                                        className="act"
+                                        disabled={!!busy}
+                                        onClick={clearFields}
+                                    >
+                                        <span className="ai">
+                                            <Icon n="reset" />
+                                        </span>
+                                        <div>
+                                            <b>Clear Fields</b>
+                                            <span>Reset invoice and start fresh</span>
+                                        </div>
+                                    </button>
                                     <button className="act main-act" disabled={!!busy} onClick={() => doExport("pdf")}>
                                         <span className="ai">{busy === "pdf" ? spinner : <Icon n="file" />}</span>
                                         <div><b>Download PDF</b><span>A4 · ready to send</span></div>
