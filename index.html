@@ -3,218 +3,753 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <meta name="theme-color" content="#17145d">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>ZS Engineers & Contractors — Invoice Generator</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin
+        src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
     <style>
         :root {
             --navy: #17145d;
-            --line: #333;
-            --muted: #666;
-            --paper: #fff
+            --primary: #39358b;
+            --accent: #5b57d6;
+            --bg: #f2f3f9;
+            --card: #fff;
+            --line: #e8e9f1;
+            --soft: #f7f7fc;
+            --text: #1f2138;
+            --muted: #80849a;
+            --ok: #1f9d6b;
+            --danger: #d14343;
+            --safe-b: env(safe-area-inset-bottom, 0px);
+            --safe-t: env(safe-area-inset-top, 0px);
         }
 
         * {
             box-sizing: border-box
         }
 
+        html,
         body {
-            margin: 0;
-            background: #f1f3f7;
-            color: #202124;
-            font: 14px/1.4 Arial, Helvetica, sans-serif
+            margin: 0
         }
 
-        header {
-            background: #17145d;
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: "Roboto", system-ui, sans-serif;
+            line-height: 1.45;
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: contain
+        }
+
+        button {
+            font-family: inherit;
+            cursor: pointer;
+            border: 0
+        }
+
+        svg.ic {
+            width: 20px;
+            height: 20px;
+            flex: none;
+            display: block
+        }
+
+        /* ---------- App bar ---------- */
+        .appbar {
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: calc(var(--safe-t) + 12px) 16px 14px;
             color: #fff;
-            padding: 15px 22px;
+            background: linear-gradient(120deg, #17145d, #33308a);
+            box-shadow: 0 6px 24px #17145d33;
+            border-radius: 0 0 22px 22px
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: #ffffff22;
+            border: 1px solid #ffffff33;
+            display: grid;
+            place-items: center;
+            font-weight: 900;
+            letter-spacing: .5px;
+            font-size: 15px
+        }
+
+        .appbar .ttl {
+            flex: 1;
+            min-width: 0
+        }
+
+        .appbar h1 {
+            margin: 0;
+            font-size: 17px;
+            font-weight: 700;
+            letter-spacing: -.2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .appbar small {
+            display: block;
+            color: #d4d3f5;
+            font-size: 11.5px;
+            margin-top: 1px
+        }
+
+        .desk-only {
+            display: none;
+            gap: 8px
+        }
+
+        .abtn {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 10px 14px;
+            border-radius: 11px;
+            font-size: 13px;
+            font-weight: 700;
+            background: #ffffff1c;
+            color: #fff;
+            border: 1px solid #ffffff2b;
+            transition: .15s
+        }
+
+        .abtn:hover {
+            background: #ffffff30
+        }
+
+        .abtn.solid {
+            background: #fff;
+            color: var(--navy);
+            border-color: #fff
+        }
+
+        .abtn[disabled] {
+            opacity: .6;
+            cursor: wait
+        }
+
+        /* ---------- Layout ---------- */
+        .main {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 16px;
+            padding: 16px 14px calc(150px + var(--safe-b))
+        }
+
+        .pane-edit {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-width: 0
+        }
+
+        .pane-preview {
+            min-width: 0
+        }
+
+        @media(max-width:999px) {
+            .tab-edit .pane-preview {
+                display: none
+            }
+
+            .tab-preview .pane-edit {
+                display: none
+            }
+        }
+
+        @media(min-width:1000px) {
+            .main {
+                grid-template-columns: minmax(360px, 440px) minmax(0, 1fr);
+                gap: 24px;
+                padding: 24px;
+                max-width: 1700px;
+                margin: 0 auto;
+                align-items: start
+            }
+
+            .appbar {
+                padding: 14px 30px;
+                border-radius: 0
+            }
+
+            .desk-only {
+                display: flex
+            }
+
+            .dock,
+            .totalbar {
+                display: none !important
+            }
+
+            .pane-preview {
+                position: sticky;
+                top: 96px
+            }
+        }
+
+        /* ---------- Cards / sections ---------- */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            box-shadow: 0 4px 20px #191b3c0a;
+            overflow: hidden
+        }
+
+        .sec-head {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px 16px;
+            background: none;
+            text-align: left;
+            color: var(--text)
+        }
+
+        .sec-ic {
+            width: 36px;
+            height: 36px;
+            border-radius: 11px;
+            background: #efeffb;
+            color: var(--primary);
+            display: grid;
+            place-items: center
+        }
+
+        .sec-t {
+            flex: 1;
+            min-width: 0
+        }
+
+        .sec-t b {
+            display: block;
+            font-size: 14.5px;
+            font-weight: 700
+        }
+
+        .sec-t span {
+            display: block;
+            font-size: 12px;
+            color: var(--muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .chev {
+            color: var(--muted);
+            transition: transform .2s
+        }
+
+        .open .chev {
+            transform: rotate(180deg)
+        }
+
+        .sec-body {
+            padding: 2px 16px 18px;
+            animation: fade .18s ease
+        }
+
+        @keyframes fade {
+            from {
+                opacity: 0;
+                transform: translateY(-4px)
+            }
+
+            to {
+                opacity: 1;
+                transform: none
+            }
+        }
+
+        .field {
+            display: block;
+            margin-top: 12px
+        }
+
+        .field>span {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: #5a5e75;
+            margin-bottom: 6px
+        }
+
+        .field small {
+            display: block;
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 5px
+        }
+
+        .input,
+        .field input,
+        .field textarea,
+        .field select {
+            width: 100%;
+            padding: 12px 13px;
+            border: 1.5px solid transparent;
+            border-radius: 12px;
+            background: var(--soft);
+            color: var(--text);
+            font: 16px "Roboto", sans-serif;
+            outline: none;
+            transition: .15s;
+            -webkit-appearance: none;
+            appearance: none
+        }
+
+        .field textarea {
+            resize: vertical;
+            line-height: 1.55;
+            min-height: 84px
+        }
+
+        .field input:focus,
+        .field textarea:focus,
+        .input:focus {
+            background: #fff;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px #5b57d618
+        }
+
+        .row2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px
+        }
+
+        @media(min-width:1000px) {
+
+            .input,
+            .field input,
+            .field textarea,
+            .field select {
+                font-size: 14px
+            }
+        }
+
+        /* items */
+        .item {
+            background: var(--soft);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 10px;
+            margin-top: 10px;
+            display: grid;
+            grid-template-columns: 26px minmax(0, 1fr) 38px;
+            gap: 8px;
+            align-items: center
+        }
+
+        .item .num {
+            width: 26px;
+            height: 26px;
+            border-radius: 8px;
+            background: #e7e6f8;
+            color: var(--primary);
+            font-size: 12px;
+            font-weight: 700;
+            display: grid;
+            place-items: center
+        }
+
+        .item input {
+            width: 100%;
+            padding: 11px 12px;
+            border: 1.5px solid transparent;
+            border-radius: 10px;
+            background: #fff;
+            font: 16px "Roboto", sans-serif;
+            color: var(--text);
+            outline: none
+        }
+
+        .item input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px #5b57d618
+        }
+
+        .item .amt {
+            grid-column: 2/4;
+            position: relative
+        }
+
+        .item .amt i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-style: normal;
+            color: var(--muted);
+            font-size: 13px;
+            pointer-events: none
+        }
+
+        .item .amt input {
+            padding-left: 38px;
+            font-weight: 500
+        }
+
+        .item .del {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: #fff0f0;
+            color: var(--danger);
+            display: grid;
+            place-items: center
+        }
+
+        .item .del:active {
+            background: #ffdede
+        }
+
+        .addbtn {
+            width: 100%;
+            margin-top: 12px;
+            padding: 13px;
+            border-radius: 13px;
+            background: #f6f6ff;
+            border: 1.5px dashed #b4b2e3;
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 13.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px
+        }
+
+        .addbtn:active {
+            background: #ececff
+        }
+
+        @media(min-width:1000px) {
+            .item input {
+                font-size: 14px
+            }
+        }
+
+        /* switch, segmented */
+        .switch-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 12px;
-            flex-wrap: wrap
+            margin-top: 6px;
+            padding: 12px 13px;
+            background: var(--soft);
+            border-radius: 13px
         }
 
-        header h1 {
-            font-size: 19px;
-            margin: 0
+        .switch-row b {
+            font-size: 14px;
+            font-weight: 500
         }
 
-        header span {
-            font-size: 12px;
-            opacity: .85
+        .switch {
+            width: 50px;
+            height: 30px;
+            border-radius: 30px;
+            background: #cfd1de;
+            position: relative;
+            transition: .2s;
+            flex: none
         }
 
-        .app {
-            display: grid;
-            grid-template-columns: minmax(300px, 420px) minmax(0, 1fr);
-            gap: 18px;
-            padding: 18px;
-            max-width: 1600px;
-            margin: auto
-        }
-
-        .panel {
+        .switch::after {
+            content: "";
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
             background: #fff;
-            border: 1px solid #d9dce3;
-            border-radius: 10px;
-            padding: 16px;
-            box-shadow: 0 2px 8px #1018280b;
-            height: max-content
+            box-shadow: 0 2px 5px #0003;
+            transition: .2s
         }
 
-        h2 {
-            font-size: 16px;
-            margin: 0 0 12px;
-            color: var(--navy)
+        .switch.on {
+            background: var(--primary)
         }
 
-        h3 {
+        .switch.on::after {
+            transform: translateX(20px)
+        }
+
+        .seg {
+            display: grid;
+            grid-auto-flow: column;
+            grid-auto-columns: 1fr;
+            background: var(--soft);
+            padding: 4px;
+            border-radius: 12px;
+            gap: 4px
+        }
+
+        .seg button {
+            padding: 10px 4px;
+            border-radius: 9px;
+            background: none;
             font-size: 13px;
-            margin: 16px 0 8px;
-            color: #30334a;
-            border-bottom: 1px solid #e7e8ee;
-            padding-bottom: 5px
+            font-weight: 700;
+            color: #666b84
         }
 
-        label {
-            display: block;
-            font-size: 12px;
-            color: #4d5260;
-            margin: 8px 0 4px
-        }
-
-        input,
-        textarea,
-        select {
-            width: 100%;
-            border: 1px solid #cfd3dc;
-            border-radius: 6px;
-            padding: 8px;
-            font: 13px Arial;
+        .seg button.on {
             background: #fff;
-            color: #202124
+            color: var(--navy);
+            box-shadow: 0 2px 8px #1a1c4018
         }
 
-        textarea {
-            min-height: 58px;
-            resize: vertical
+        .dim {
+            opacity: .45;
+            pointer-events: none
         }
 
-        .two {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 9px
+        .sumbox {
+            margin-top: 14px;
+            border-radius: 14px;
+            background: var(--soft);
+            padding: 12px 14px
         }
 
-        .items-head,
-        .itemrow {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) 92px 30px;
-            gap: 6px;
-            align-items: center
+        .sumbox div {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13.5px;
+            padding: 4px 0;
+            color: #52566e
         }
 
-        .itemrow {
-            margin: 6px 0
+        .sumbox div.t {
+            border-top: 1px dashed #d4d5e4;
+            margin-top: 6px;
+            padding-top: 10px;
+            font-weight: 700;
+            color: var(--navy);
+            font-size: 15.5px
         }
 
-        .itemrow input {
-            min-width: 0
+        /* letterhead */
+        .lh-thumb {
+            height: 120px;
+            border-radius: 12px;
+            border: 1px solid var(--line);
+            background: #fff center/contain no-repeat;
+            margin-top: 4px
         }
 
-        .itemrow button {
-            border: 0;
-            background: #fee;
-            color: #a11;
-            border-radius: 5px;
-            height: 34px;
-            cursor: pointer
-        }
-
-        button {
-            border: 0;
-            border-radius: 7px;
-            padding: 10px 13px;
-            font-weight: 600;
-            cursor: pointer
-        }
-
-        .primary {
-            background: #17145d;
-            color: white
-        }
-
-        .secondary {
-            background: #eef0f8;
-            color: #17145d
-        }
-
-        .actions {
+        .btns {
             display: flex;
             gap: 8px;
-            flex-wrap: wrap;
             margin-top: 12px
         }
 
-        .small {
-            font-size: 11px;
-            color: #737887
-        }
-
-        .checkline {
+        .btn {
+            flex: 1;
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin-top: 9px
+            justify-content: center;
+            gap: 7px;
+            padding: 12px;
+            border-radius: 12px;
+            background: #f0f0fa;
+            color: #28256e;
+            font-weight: 700;
+            font-size: 13px;
+            border: 1px solid #e4e3f4
         }
 
-        .checkline input {
-            width: auto
+        .btn:active {
+            background: #e4e3f8
         }
 
-        .preview-wrap {
+        .btn.primary {
+            background: linear-gradient(120deg, #17145d, #37328d);
+            color: #fff;
+            border: 0
+        }
+
+        input[type=file] {
+            display: none
+        }
+
+        /* ---------- Preview ---------- */
+        .pv {
+            padding: 14px
+        }
+
+        .pv.fs {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            border-radius: 0;
             overflow: auto;
-            background: #e7e9ef;
-            padding: 16px;
-            border-radius: 10px
+            padding: calc(var(--safe-t) + 12px) 12px 12px;
+            background: var(--bg)
         }
 
-        #invoice {
+        .fs-exit {
+            position: fixed;
+            top: calc(var(--safe-t) + 12px);
+            right: 12px;
+            z-index: 1100;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 14px;
+            border-radius: 999px;
+            background: #202238;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            box-shadow: 0 8px 24px #0004
+        }
+
+        .fs-exit:active {
+            transform: scale(.97)
+        }
+
+        .pv.fs .pv-bar {
+            padding-right: 0;
+            margin-top: 48px
+        }
+
+        .pv-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 12px
+        }
+
+        .pv-bar h2 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 700
+        }
+
+        .live {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--ok);
+            margin-top: 2px
+        }
+
+        .live::before {
+            content: "";
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #22b573;
+            box-shadow: 0 0 0 3px #22b57322
+        }
+
+        .tools {
+            display: flex;
+            align-items: center;
+            gap: 6px
+        }
+
+        .tools button {
+            height: 38px;
+            min-width: 38px;
+            padding: 0 10px;
+            border-radius: 10px;
+            background: #f1f1fa;
+            color: #34365b;
+            font-weight: 700;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px
+        }
+
+        .tools button:active {
+            background: #e3e3f5
+        }
+
+        .tools .pct {
+            font-size: 12px;
+            color: var(--muted);
+            min-width: 42px;
+            text-align: center;
+            font-weight: 700
+        }
+
+        .pv-wrap {
+            background: #e9ebf2;
+            background-image: radial-gradient(#d2d5e0 1px, transparent 1px);
+            background-size: 18px 18px;
+            padding: 14px;
+            border-radius: 14px;
+            border: 1px solid #dfe1e9;
+            overflow: auto;
+            min-height: 280px
+        }
+
+        .pv.fs .pv-wrap {
+            min-height: calc(100vh - 110px)
+        }
+
+        .sizer {
+            margin: 0 auto;
+            position: relative;
+            filter: drop-shadow(0 7px 18px #0000001f)
+        }
+
+        /* ---------- Invoice (paper) ---------- */
+        .inv {
             width: 720px;
             height: 988px;
-            background-size: 100% 100%;
-            background-position: center center;
-            background-repeat: no-repeat;
             position: relative;
-            margin: 0;
             transform-origin: top left;
+            overflow: hidden;
             background-color: #fff;
             background-position: center center;
             background-repeat: no-repeat;
             background-size: contain;
-            background-image: url("https://github.com/burairabs/zs-invoice-generator/blob/main/zs_letterhead.png?raw=true");
             color: #111;
-            font-family: "Roboto", sans-serif;
-            overflow: hidden;
-            box-shadow: 0 3px 16px #0002
+            font-family: "Roboto", sans-serif
         }
 
-        #invoice .content {
+        .inv .content {
             position: absolute;
             left: 5.8%;
             right: 5.8%;
-            top: 13.7%;
-            height: 72%;
             font-size: 14px
         }
 
-        .inv-title {
+        .inv .inv-title {
             width: 33%;
-            margin: 0 auto 0;
+            margin: 0 auto;
             border: 1px solid #444;
             background: #f4f4f4;
             text-align: center;
@@ -223,14 +758,14 @@
             padding: 5px 0
         }
 
-        .meta {
+        .inv .meta {
             display: flex;
             justify-content: space-between;
             font-weight: 700;
             margin: 0 8px 28px
         }
 
-        .parties {
+        .inv .parties {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 20px;
@@ -238,63 +773,57 @@
             min-height: 126px
         }
 
-        .party {
+        .inv .party {
             white-space: pre-line;
             line-height: 1.38;
             font-size: 13.5px
         }
 
-        .party.right {
-            text-align: left;
+        .inv .party.right {
             padding-left: 8px
         }
 
-        .party b {
-            font-weight: 700
-        }
-
-        .table {
+        .inv .table {
             width: 100%;
             border-collapse: collapse;
             table-layout: fixed;
             font-size: 14px
         }
 
-        .table th,
-        .table td {
+        .inv .table th,
+        .inv .table td {
             border: 1px solid #222;
             padding: 5px 10px
         }
 
-        .table th {
+        .inv .table th {
             background: #e7e7e7;
             text-align: center;
             font-weight: 700;
             height: 39px
         }
 
-        .table th:last-child,
-        .table td:last-child {
+        .inv .table th:last-child,
+        .inv .table td:last-child {
             width: 20%;
             text-align: right
         }
 
-        .table td:first-child {
+        .inv .table td:first-child {
             width: 80%
         }
 
-        .table .sum td {
+        .inv .table .sum td {
             font-weight: 700;
             text-align: right
         }
 
-        .table .grand td {
+        .inv .table .grand td {
             font-weight: 700;
-            background: #e7e7e7;
-            font-size: 14px
+            background: #e7e7e7
         }
 
-        .words {
+        .inv .words {
             border: 1px solid #222;
             margin-top: 9px;
             padding: 9px 10px;
@@ -302,72 +831,250 @@
             min-height: 38px
         }
 
-        .account {
+        .inv .account {
             margin: 20px 8px 0;
             font-size: 13px;
-            line-height: 1.55;
-            white-space: pre-line
+            line-height: 1.55
         }
 
-        .account strong {
+        .inv .account strong {
             text-decoration: underline
         }
 
-        #sizer {
-            margin: 0 auto;
-            position: relative
+        .export-host {
+            position: fixed;
+            left: -10000px;
+            top: 0;
+            width: 720px;
+            height: 988px;
+            pointer-events: none
         }
 
-        .hint {
+        /* ---------- Bottom dock (mobile) ---------- */
+        .totalbar {
+            position: fixed;
+            left: 12px;
+            right: 12px;
+            bottom: calc(68px + var(--safe-b));
+            z-index: 45;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 10px 10px 16px;
+            border-radius: 18px;
+            color: #fff;
+            background: linear-gradient(120deg, #17145d, #37328d);
+            box-shadow: 0 10px 28px #17145d55
+        }
+
+        .totalbar small {
+            display: block;
             font-size: 11px;
-            color: #737887;
-            margin: 4px 0 0
+            color: #cfcdf3
         }
 
-        .btnrow {
+        .totalbar b {
+            font-size: 19px;
+            font-weight: 700;
+            letter-spacing: -.3px
+        }
+
+        .totalbar button {
+            background: #fff;
+            color: var(--navy);
+            padding: 11px 15px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px
+        }
+
+        .dock {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 50;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            padding: 6px 8px calc(6px + var(--safe-b));
+            background: #ffffffee;
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-top: 1px solid var(--line)
+        }
+
+        .dock button {
+            background: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            padding: 7px 0;
+            border-radius: 12px;
+            color: #8b8fa6;
+            font-size: 11px;
+            font-weight: 700
+        }
+
+        .dock button.on {
+            color: var(--navy)
+        }
+
+        .dock button.on .pill {
+            background: #e8e7fb
+        }
+
+        .dock .pill {
+            padding: 4px 18px;
+            border-radius: 20px;
+            transition: .2s
+        }
+
+        /* sheet + toast */
+        .scrim {
+            position: fixed;
+            inset: 0;
+            z-index: 900;
+            background: #0f0f2a8c;
+            animation: fadein .2s
+        }
+
+        @keyframes fadein {
+            from {
+                opacity: 0
+            }
+        }
+
+        .sheet {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 910;
+            max-width: 540px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 24px 24px 0 0;
+            padding: 10px 16px calc(18px + var(--safe-b));
+            animation: up .25s cubic-bezier(.2, .8, .2, 1)
+        }
+
+        @keyframes up {
+            from {
+                transform: translateY(100%)
+            }
+        }
+
+        .sheet .grip {
+            width: 42px;
+            height: 5px;
+            border-radius: 5px;
+            background: #d6d7e3;
+            margin: 0 auto 12px
+        }
+
+        .sheet h3 {
+            margin: 4px 0 12px;
+            font-size: 17px
+        }
+
+        .act {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px;
+            margin-top: 8px;
+            border-radius: 15px;
+            background: var(--soft);
+            text-align: left;
+            color: var(--text)
+        }
+
+        .act .ai {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: #e8e7fb;
+            color: var(--primary);
+            display: grid;
+            place-items: center
+        }
+
+        .act.main-act {
+            background: linear-gradient(120deg, #17145d, #37328d);
+            color: #fff
+        }
+
+        .act.main-act .ai {
+            background: #ffffff26;
+            color: #fff
+        }
+
+        .act b {
+            display: block;
+            font-size: 14.5px
+        }
+
+        .act span {
+            font-size: 12px;
+            opacity: .7
+        }
+
+        .act[disabled] {
+            opacity: .6
+        }
+
+        .toast {
+            position: fixed;
+            left: 50%;
+            bottom: calc(140px + var(--safe-b));
+            transform: translateX(-50%);
+            z-index: 1200;
+            max-width: 90vw;
+            padding: 11px 18px;
+            border-radius: 14px;
+            background: #202238;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: 0 10px 30px #0004;
+            animation: fade .2s;
             display: flex;
             gap: 8px;
-            margin-top: 8px
+            align-items: center
         }
 
-        .btnrow button {
-            flex: 1
+        .toast.err {
+            background: #a82b2b
         }
 
-        @media(max-width:900px) {
-            .app {
-                grid-template-columns: minmax(0, 1fr);
-                padding: 10px;
-                gap: 12px
-            }
-
-            .panel {
-                padding: 12px
-            }
-
-            .preview-wrap {
-                padding: 8px
-            }
-
-            header {
-                padding: 12px 14px
+        @media(min-width:1000px) {
+            .toast {
+                bottom: 28px
             }
         }
 
-        @media(max-width:480px) {
-            .two {
-                grid-template-columns: 1fr
-            }
+        .spin {
+            width: 16px;
+            height: 16px;
+            border: 2.5px solid #ffffff55;
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: rot .7s linear infinite
+        }
 
-            .actions button {
-                flex: 1 1 100%
-            }
-
-            header h1 {
-                font-size: 16px
+        @keyframes rot {
+            to {
+                transform: rotate(360deg)
             }
         }
 
+        /* ---------- Print ---------- */
         @media print {
             @page {
                 size: A4;
@@ -378,40 +1085,16 @@
                 background: #fff
             }
 
-            header,
-            #form,
-            #previewPanel h2 {
+            .shell {
                 display: none !important
             }
 
-            .app {
-                display: block;
-                padding: 0;
-                max-width: none
+            .export-host {
+                position: static !important;
+                left: 0 !important
             }
 
-            #previewPanel {
-                border: 0;
-                box-shadow: none;
-                padding: 0;
-                background: none
-            }
-
-            .preview-wrap {
-                padding: 0;
-                background: none;
-                overflow: visible
-            }
-
-            #sizer {
-                width: 720px !important;
-                height: 988px !important;
-                margin: 0
-            }
-
-            #invoice {
-                transform: none !important;
-                box-shadow: none;
+            .export-host .inv {
                 print-color-adjust: exact;
                 -webkit-print-color-adjust: exact
             }
@@ -420,146 +1103,487 @@
 </head>
 
 <body>
-    <header>
-        <h1>ZS Engineers & Contractors — Invoice Generator</h1><span>Editable invoice • GST • PDF & image export</span>
-    </header>
-    <div class="app">
-        <section class="panel" id="form">
-            <h2>Invoice details</h2>
-            <div class="two">
-                <div><label>Invoice number</label><input id="number" value="09"></div>
-                <div><label>Invoice date</label><input id="date" type="date" value="2026-11-06"></div>
-            </div>
-            <h3>Client / Bill to</h3>
-            <label>Client name</label><input id="client" value="Le Petit">
-            <label>Client address</label><textarea id="clientAddress">Level 2, Unit No. 02-58 / 02-04,
-Jio World Plaza, G Block BKC,
-Bandra Kurla Complex, Bandra East,
-Mumbai – 400051</textarea>
-            <label>Client GSTIN</label><input id="clientGstin" value="27AADCD8531F1ZQ">
-            <h3>Items / Description of works</h3>
-            <div id="items"></div><button class="secondary" id="add">+ Add item</button>
-            <h3>Tax & totals</h3>
-            <div class="checkline"><input id="gstEnabled" type="checkbox" checked><label for="gstEnabled"
-                    style="margin:0">Apply GST</label></div>
-            <div class="two">
-                <div><label>GST rate (%)</label><input id="gstRate" type="number" min="0" step="0.01" value="18"></div>
-                <div><label>Currency</label><select id="currency">
-                        <option value="INR">INR (₹)</option>
-                        <option value="USD">USD ($)</option>
-                        <option value="AED">AED</option>
-                    </select></div>
-            </div>
-            <label>Amount in words (leave blank to auto-generate)</label><input id="wordsOverride"
-                placeholder="Auto-generated from total">
-            <h3>Company / account details</h3>
-            <label>Beneficiary name</label><input id="beneficiary" value="ZS ENGINEERS & CONTRACTORS">
-            <label>Bank A/C No.</label><input id="accountNo" value="113505001778">
-            <label>Bank name</label><input id="bank" value="ICICI BANK">
-            <label>IFSC code</label><input id="ifsc" value="ICIC0001135">
-            <label>Seller address / GSTIN (shown on right)</label><textarea id="sellerAddress">ZS ENGINEERS & CONTRACTORS
-B-4/130, Brijipuri karawal Nagar
-Delhi-110094
-GSTIN: 07ACMPI7734B1ZO</textarea>
-            <h3>Letterhead (background image)</h3>
-            <label>Image link (URL)</label><input id="lhUrl" type="url"
-                placeholder="https://example.com/letterhead.png">
-            <p class="hint">Link must allow cross-origin access for PDF/image export. If export fails, upload the file
-                instead.</p>
-            <label>Or upload PNG / JPG</label><input id="lhFile" type="file" accept="image/png,image/jpeg,image/webp">
-            <div class="two">
-                <div><label>Content starts at (% from top)</label><input id="lhTop" type="number" step="0.1" min="0"
-                        max="60" value="13.7"></div>
-                <div><label>Content height (%)</label><input id="lhHeight" type="number" step="0.1" min="20" max="100"
-                        value="72"></div>
-            </div>
-            <div class="btnrow"><button class="secondary" id="lhApply" type="button">Apply link</button><button
-                    class="secondary" id="lhReset" type="button">Reset to default</button></div>
-            <div class="actions"><button class="primary" id="pdf">Download PDF</button><button class="secondary"
-                    id="png">Download image</button><button class="secondary" id="print">Print</button></div>
-            <p class="small">Exports capture the invoice page with the uploaded letterhead as its background. For best
-                results, use a desktop browser and allow the export library to load.</p>
-        </section>
-        <section class="panel" id="previewPanel">
-            <h2>Live invoice preview</h2>
-            <div class="preview-wrap">
-                <div id="sizer">
-                    <div id="invoice">
-                        <div class="content">
-                            <div class="inv-title">TAX INVOICE</div>
-                            <div class="meta"><span>Invoice No : <span id="p-number">09</span></span><span>Date: <span
-                                        id="p-date">06/11/2026</span></span></div>
-                            <div class="parties">
-                                <div class="party"><b>To,</b>
-                                    <b id="p-client">Le Petit</b>
-                                    <span id="p-clientAddress"></span>
-                                    <b id="p-clientGstin"></b>
-                                </div>
-                                <div class="party right" id="p-seller"></div>
+    <div id="root"></div>
+
+    <script type="text/babel" data-presets="react">
+        const { useState, useEffect, useMemo, useRef, useCallback } = React;
+
+        /* ================= Constants & helpers ================= */
+        const DEFAULT_BG = "https://raw.githubusercontent.com/burairabs/zs-invoice-generator/main/zs_letterhead.png";
+        const CURRENCIES = {
+            INR: { label: "INR (₹)", sym: "₹", unit: "Rupees" },
+            USD: { label: "USD ($)", sym: "$", unit: "Dollars" },
+            AED: { label: "AED", sym: "AED", unit: "Dirhams" },
+        };
+        let _uid = 0;
+        const uid = () => ++_uid;
+
+        const INITIAL_INV = {
+            number: "09",
+            date: "2026-11-06",
+            client: "Le Petit",
+            clientAddress: "Level 2, Unit No. 02-58 / 02-04,\nJio World Plaza, G Block BKC,\nBandra Kurla Complex, Bandra East,\nMumbai – 400051",
+            clientGstin: "27AADCD8531F1ZQ",
+            gstEnabled: true,
+            gstRate: "18",
+            currency: "INR",
+            wordsOverride: "",
+            beneficiary: "ZS ENGINEERS & CONTRACTORS",
+            accountNo: "113505001778",
+            bank: "ICICI BANK",
+            ifsc: "ICIC0001135",
+            sellerAddress: "ZS ENGINEERS & CONTRACTORS\nB-4/130, Brijipuri karawal Nagar\nDelhi-110094\nGSTIN: 07ACMPI7734B1ZO",
+        };
+        const INITIAL_ITEMS = [
+            ["Asian Apcolite paint", 32000], ["Ceiling crack repairing", 9000], ["COV light (Chip & Driver)", 11000],
+            ["Table", 18000], ["Track Light (9pc)", 26000], ["Labour Charges", 10000], ["AC Belt", 4000], ["Racks (5pc)", 50000],
+        ].map(([desc, amt]) => ({ id: uid(), desc, amt }));
+
+        const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+        const lsSet = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) { } };
+
+        const money = n => Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const moneyUS = n => Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        function wordsIndian(n, unit = "Rupees") {
+            n = Math.round(n);
+            if (n === 0) return "Zero " + unit + " Only.";
+            const a = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+            const b = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+            const two = x => x < 20 ? a[x] : b[Math.floor(x / 10)] + (x % 10 ? " " + a[x % 10] : "");
+            const three = x => x > 99 ? a[Math.floor(x / 100)] + " Hundred" + (x % 100 ? " " + two(x % 100) : "") : two(x);
+            const out = [];
+            const crore = Math.floor(n / 10000000); n %= 10000000;
+            const lakh = Math.floor(n / 100000); n %= 100000;
+            const thousand = Math.floor(n / 1000); n %= 1000;
+            if (crore) out.push(three(crore) + " Crore");
+            if (lakh) out.push(three(lakh) + " Lakh");
+            if (thousand) out.push(three(thousand) + " Thousand");
+            if (n) out.push(three(n));
+            return out.join(" ") + " " + unit + " Only.";
+        }
+
+        const loadLib = url => new Promise((res, rej) => {
+            const s = document.createElement("script");
+            s.src = url; s.onload = res; s.onerror = rej; document.head.appendChild(s);
+        });
+
+        /* ================= Icons ================= */
+        const PATHS = {
+            edit: "M12 20h9 M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z",
+            eye: "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z",
+            download: "M12 3v12 M7 11l5 5 5-5 M5 21h14",
+            upload: "M12 15V3 M7 8l5-5 5 5 M5 21h14",
+            user: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z",
+            list: "M8 6h13 M8 12h13 M8 18h13 M3 6h.01 M3 12h.01 M3 18h.01",
+            percent: "M19 5 5 19 M6.5 9a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z M17.5 20a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z",
+            bank: "M3 21h18 M5 21V10 M19 21V10 M9 21V10 M15 21V10 M3 10l9-6 9 6",
+            building: "M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16 M16 9h2a2 2 0 0 1 2 2v10 M2 21h20 M8 7h4 M8 11h4 M8 15h4",
+            image: "M4 5h16v14H4Z M8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z M20 16l-5-5-8 8",
+            plus: "M12 5v14 M5 12h14",
+            trash: "M3 6h18 M8 6V4h8v2 M6 6l1 14h10l1-14 M10 11v5 M14 11v5",
+            chevron: "m6 9 6 6 6-6",
+            print: "M6 9V3h12v6 M6 18H4v-7h16v7h-2 M7 14h10v7H7Z",
+            zoomin: "M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z M21 21l-4.3-4.3 M8 11h6 M11 8v6",
+            zoomout: "M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z M21 21l-4.3-4.3 M8 11h6",
+            expand: "M8 3H5a2 2 0 0 0-2 2v3 M21 8V5a2 2 0 0 0-2-2h-3 M3 16v3a2 2 0 0 0 2 2h3 M16 21h3a2 2 0 0 0 2-2v-3",
+            close: "M18 6 6 18 M6 6l12 12",
+            check: "M20 6 9 17l-5-5",
+            file: "M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z M14 3v5h5",
+            reset: "M3 12a9 9 0 1 0 3-6.7L3 8 M3 3v5h5",
+            arrow: "M5 12h14 M13 6l6 6-6 6",
+        };
+        const Icon = ({ n }) => (
+            <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d={PATHS[n]} />
+            </svg>
+        );
+
+        /* ================= UI atoms ================= */
+        function Section({ icon, title, summary, defaultOpen = false, children }) {
+            const [open, setOpen] = useState(defaultOpen);
+            return (
+                <div className={"card" + (open ? " open" : "")}>
+                    <button className="sec-head" onClick={() => setOpen(o => !o)} aria-expanded={open}>
+                        <span className="sec-ic"><Icon n={icon} /></span>
+                        <span className="sec-t"><b>{title}</b><span>{summary}</span></span>
+                        <span className="chev"><Icon n="chevron" /></span>
+                    </button>
+                    {open && <div className="sec-body">{children}</div>}
+                </div>
+            );
+        }
+        const Field = ({ label, hint, children }) => (
+            <label className="field"><span>{label}</span>{children}{hint && <small>{hint}</small>}</label>
+        );
+
+        /* ================= Invoice paper ================= */
+        function Invoice({ id, inv, calc, fmt, bg, top, height, style }) {
+            const curr = inv.currency;
+            const words = inv.wordsOverride || wordsIndian(calc.total, CURRENCIES[curr].unit);
+            const dt = inv.date ? new Date(inv.date + "T00:00:00").toLocaleDateString("en-GB") : "";
+            return (
+                <div id={id} className="inv" style={{ backgroundImage: 'url("' + String(bg).replace(/"/g, "%22") + '")', ...style }}>
+                    <div className="content" style={{ top: (Number(top) || 13.7) + "%", height: (Number(height) || 72) + "%" }}>
+                        <div className="inv-title">TAX INVOICE</div>
+                        <div className="meta"><span>Invoice No : {inv.number}</span><span>Date: {dt}</span></div>
+                        <div className="parties">
+                            <div className="party">
+                                <div><b>To,</b></div>
+                                <div><b>{inv.client}</b></div>
+                                <div>{inv.clientAddress}</div>
+                                {inv.clientGstin && <div><b>GSTIN No: {inv.clientGstin}</b></div>}
                             </div>
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Description of Works</th>
-                                        <th>Amount (INR)</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="p-rows"></tbody>
-                                <tfoot id="p-totals"></tfoot>
-                            </table>
-                            <div class="words"><b>Amount in Words:</b> &nbsp;<span id="p-words"></span></div>
-                            <div class="account"><strong>ACCOUNT DETAILS</strong>
-                                Beneficiary Name: <b id="p-beneficiary"></b>
-                                Bank A/C No : <span id="p-accountNo"></span>
-                                Bank Name: <span id="p-bank"></span>
-                                IFSC CODE: <span id="p-ifsc"></span></div>
+                            <div className="party right">{inv.sellerAddress}</div>
+                        </div>
+                        <table className="table">
+                            <thead><tr><th>Description of Works</th><th>Amount ({curr})</th></tr></thead>
+                            <tbody>{calc.rows.map((r, i) => <tr key={i}><td>{r.d}</td><td>{fmt(r.a)}</td></tr>)}</tbody>
+                            <tfoot>
+                                <tr className="sum"><td>Subtotal</td><td>{fmt(calc.subtotal)}</td></tr>
+                                {inv.gstEnabled && <tr className="sum"><td>GST @ {calc.rate}%</td><td>{fmt(calc.gst)}</td></tr>}
+                                <tr className="grand"><td>Total Amount</td><td>{fmt(calc.total)}</td></tr>
+                            </tfoot>
+                        </table>
+                        <div className="words"><b>Amount in Words:</b> &nbsp;<span>{words}</span></div>
+                        <div className="account">
+                            <div><strong>ACCOUNT DETAILS</strong></div>
+                            <div>Beneficiary Name: <b>{inv.beneficiary}</b></div>
+                            <div>Bank A/C No : {inv.accountNo}</div>
+                            <div>Bank Name: {inv.bank}</div>
+                            <div>IFSC CODE: {inv.ifsc}</div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </section>
-    </div>
-    <script>
-        const $ = id => document.getElementById(id);
-        const money = n => Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        const initial = [["Asian Apcolite paint", 32000], ["Ceiling crack repairing", 9000], ["COV light (Chip & Driver)", 11000], ["Table", 18000], ["Track Light (9pc)", 26000], ["Labour Charges", 10000], ["AC Belt", 4000], ["Racks (5pc)", 50000]];
-        function addItem(desc = "", amount = "") { const row = document.createElement("div"); row.className = "itemrow"; row.innerHTML = '<input class="desc" placeholder="Description" aria-label="Description"><input class="amt" type="number" min="0" step="0.01" placeholder="Amount"><button type="button" title="Remove item">×</button>'; row.querySelector(".desc").value = desc; row.querySelector(".amt").value = amount; row.querySelector("button").onclick = () => { row.remove(); render() }; row.querySelectorAll("input").forEach(x => x.addEventListener("input", render)); $("items").appendChild(row); render() }
-        initial.forEach(x => addItem(...x));
-        $("add").onclick = () => addItem();
-        function wordsIndian(n) { n = Math.round(n); if (n === 0) return "Zero Rupees Only."; const a = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"], b = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"]; function two(x) { return x < 20 ? a[x] : b[Math.floor(x / 10)] + (x % 10 ? " " + a[x % 10] : "") } function three(x) { return x > 99 ? a[Math.floor(x / 100)] + " Hundred" + (x % 100 ? " " + two(x % 100) : "") : two(x) } let out = []; let crore = Math.floor(n / 10000000); n %= 10000000; let lakh = Math.floor(n / 100000); n %= 100000; let thousand = Math.floor(n / 1000); n %= 1000; let hundred = n; if (crore) out.push(three(crore) + " Crore"); if (lakh) out.push(three(lakh) + " Lakh"); if (thousand) out.push(three(thousand) + " Thousand"); if (hundred) out.push(three(hundred)); return out.join(" ") + " Rupees Only." }
-        function val(id) { return $(id).value }
-        function render() {
-            let rows = [...document.querySelectorAll(".itemrow")].map(r => ({ d: r.querySelector(".desc").value, a: Number(r.querySelector(".amt").value) || 0 })); let subtotal = rows.reduce((s, x) => s + x.a, 0), gst = $("gstEnabled").checked ? subtotal * (Number(val("gstRate")) || 0) / 100 : 0, total = subtotal + gst; let curr = val("currency"); let fmt = n => curr === "INR" ? money(n) : Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            $("p-number").textContent = val("number"); let dt = val("date"); $("p-date").textContent = dt ? new Date(dt + "T00:00:00").toLocaleDateString("en-GB") : "";
-            $("p-client").textContent = val("client"); $("p-clientAddress").textContent = val("clientAddress"); $("p-clientGstin").textContent = val("clientGstin") ? "GSTIN No: " + val("clientGstin") : "";
-            $("p-seller").textContent = val("sellerAddress"); $("p-beneficiary").textContent = val("beneficiary"); $("p-accountNo").textContent = val("accountNo"); $("p-bank").textContent = val("bank"); $("p-ifsc").textContent = val("ifsc");
-            $("p-rows").innerHTML = rows.map(x => `<tr><td>${escapeHtml(x.d)}</td><td>${fmt(x.a)}</td></tr>`).join("");
-            $("p-totals").innerHTML = `<tr class="sum"><td>Subtotal</td><td>${fmt(subtotal)}</td></tr>` + ($("gstEnabled").checked ? `<tr class="sum"><td>GST @ ${Number(val("gstRate")) || 0}%</td><td>${fmt(gst)}</td></tr>` : "") + `<tr class="grand"><td>Total Amount</td><td>${fmt(total)}</td></tr>`;
-            $("p-words").textContent = val("wordsOverride") || wordsIndian(total);
-            document.querySelector(".table th:last-child").textContent = "Amount (" + curr + ")";
+            );
         }
-        function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])) }
-        document.querySelectorAll("input,textarea,select").forEach(x => { if (x.closest("#items")) return; x.addEventListener("input", render); x.addEventListener("change", render) });
-        render();
-        function loadLib(url) { return new Promise((res, rej) => { let s = document.createElement("script"); s.src = url; s.onload = res; s.onerror = rej; document.head.appendChild(s) }) }
-        async function capture() { if (!window.html2canvas) await loadLib("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"); const inv = $("invoice"), old = inv.style.transform; inv.style.transform = "none"; try { return await html2canvas(inv, { scale: 2, useCORS: true, backgroundColor: "#ffffff", width: 720, height: 988, windowWidth: Math.max(innerWidth, 800) }) } finally { inv.style.transform = old } }
-        $("png").onclick = async () => { try { let c = await capture(), a = document.createElement("a"); a.download = "ZS-Invoice-" + val("number") + ".png"; a.href = c.toDataURL("image/png"); a.click() } catch (e) { alert("Image export failed. Check your internet connection and try again.") } };
-        $("pdf").onclick = async () => { try { let c = await capture(); if (!window.jspdf) await loadLib("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"); let { jsPDF } = window.jspdf; let pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" }); pdf.addImage(c.toDataURL("image/jpeg", .96), "JPEG", 0, 0, 210, 288); pdf.save("ZS-Invoice-" + val("number") + ".pdf") } catch (e) { alert("PDF export failed. Check your internet connection and try again.") } };
-        $("print").onclick = () => window.print();
-        /* ---- responsive scaling ---- */
-        function fit() { const w = document.querySelector(".preview-wrap"), cs = getComputedStyle(w), avail = w.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight), k = Math.min(1, avail / 720); $("invoice").style.transform = k < 1 ? "scale(" + k + ")" : "none"; $("sizer").style.width = 720 * k + "px"; $("sizer").style.height = 988 * k + "px" }
-        addEventListener("resize", fit); if (window.ResizeObserver) new ResizeObserver(fit).observe(document.querySelector(".preview-wrap")); fit();
-        /* ---- custom letterhead ---- */
-        const DEFAULT_BG = $("invoice").style.backgroundImage || getComputedStyle($("invoice")).backgroundImage;
-        function setBg(src) { $("invoice").style.backgroundImage = src ? 'url("' + String(src).replace(/"/g, '%22') + '")' : DEFAULT_BG }
-        function setLayout() { const c = document.querySelector("#invoice .content"); c.style.top = (Number(val("lhTop")) || 13.7) + "%"; c.style.height = (Number(val("lhHeight")) || 72) + "%" }
-        function store(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v) } catch (e) { } }
-        function applyUrl() { const u = val("lhUrl").trim(); if (!u) { setBg(null); store("lh", null); return } const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => { setBg(u); store("lh", u) }; im.onerror = () => { alert("Could not load that image with export access. Check the link, or upload the file instead.") }; im.src = u }
-        $("lhApply").onclick = applyUrl; $("lhUrl").addEventListener("change", applyUrl);
-        $("lhFile").onchange = e => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { setBg(r.result); $("lhUrl").value = ""; store("lh", r.result.length < 4e6 ? r.result : null) }; r.readAsDataURL(f) };
-        $("lhReset").onclick = () => { setBg(null); $("lhUrl").value = ""; $("lhFile").value = ""; $("lhTop").value = 13.7; $("lhHeight").value = 72; setLayout(); store("lh", null); store("lhTop", null); store("lhHeight", null) };
-        ["lhTop", "lhHeight"].forEach(id => $(id).addEventListener("input", () => { setLayout(); store(id, val(id)) }));
-        try { const sv = localStorage.getItem("lh"); if (sv) { setBg(sv); if (/^https?:/.test(sv)) $("lhUrl").value = sv } ["lhTop", "lhHeight"].forEach(id => { const v = localStorage.getItem(id); if (v) $(id).value = v }); setLayout() } catch (e) { }
+
+        /* ================= Preview pane (zoom / fit / fullscreen) ================= */
+        function PreviewPane({ invoiceProps }) {
+            const wrapRef = useRef(null);
+            const [fit, setFit] = useState(1);
+            const [zoom, setZoom] = useState(1);
+            const [fs, setFs] = useState(false);
+
+            const measure = useCallback(() => {
+                const w = wrapRef.current; if (!w) return;
+                const cs = getComputedStyle(w);
+                const avail = w.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+                if (avail > 0) setFit(Math.min(fs ? 1.5 : 1, avail / 720));
+            }, [fs]);
+
+            useEffect(() => {
+                measure();
+                const ro = window.ResizeObserver ? new ResizeObserver(measure) : null;
+                if (ro && wrapRef.current) ro.observe(wrapRef.current);
+                window.addEventListener("resize", measure);
+                return () => { ro && ro.disconnect(); window.removeEventListener("resize", measure); };
+            }, [measure]);
+
+            useEffect(() => {
+                document.body.style.overflow = fs ? "hidden" : "";
+                return () => { document.body.style.overflow = ""; };
+            }, [fs]);
+
+            useEffect(() => {
+                if (!fs) return;
+                const onKey = e => { if (e.key === "Escape") setFs(false); };
+                window.addEventListener("keydown", onKey);
+                return () => window.removeEventListener("keydown", onKey);
+            }, [fs]);
+
+            const scale = fit * zoom;
+            return (
+                <div className={"card pv" + (fs ? " fs" : "")}>
+                    {fs && (
+                        <button className="fs-exit" type="button" onClick={() => setFs(false)} aria-label="Exit full screen">
+                            <Icon n="close" /> Exit full screen
+                        </button>
+                    )}
+                    <div className="pv-bar">
+                        <div><h2>Invoice preview</h2><div className="live">Live preview</div></div>
+                        <div className="tools">
+                            <button onClick={() => setZoom(z => Math.max(0.5, +(z - 0.1).toFixed(2)))} aria-label="Zoom out"><Icon n="zoomout" /></button>
+                            <span className="pct">{Math.round(scale * 100)}%</span>
+                            <button onClick={() => setZoom(z => Math.min(2, +(z + 0.1).toFixed(2)))} aria-label="Zoom in"><Icon n="zoomin" /></button>
+                            <button onClick={() => setZoom(1)}>Fit</button>
+                            <button onClick={() => setFs(f => !f)} aria-label="Full screen"><Icon n={fs ? "close" : "expand"} /></button>
+                        </div>
+                    </div>
+                    <div className="pv-wrap" ref={wrapRef}>
+                        <div className="sizer" style={{ width: 720 * scale, height: 988 * scale }}>
+                            <Invoice id="invoice" {...invoiceProps} style={{ transform: "scale(" + scale + ")" }} />
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        /* ================= App ================= */
+        function App() {
+            const [inv, setInv] = useState(INITIAL_INV);
+            const [items, setItems] = useState(INITIAL_ITEMS);
+            const [focusId, setFocusId] = useState(null);
+            const [tab, setTab] = useState("edit");
+            const [sheet, setSheet] = useState(false);
+            const [busy, setBusy] = useState(null);
+            const [toast, setToast] = useState(null);
+
+            // letterhead
+            const [lh, setLh] = useState(() => lsGet("lh"));
+            const [lhInput, setLhInput] = useState(() => { const s = lsGet("lh"); return s && /^https?:/.test(s) ? s : ""; });
+            const [lhTop, setLhTop] = useState(() => lsGet("lhTop") || "13.7");
+            const [lhHeight, setLhHeight] = useState(() => lsGet("lhHeight") || "72");
+            const bg = lh || DEFAULT_BG;
+
+            const set = k => e => { const v = e.target.value; setInv(p => ({ ...p, [k]: v })); };
+            const showToast = (msg, err) => { setToast({ msg, err }); clearTimeout(showToast.t); showToast.t = setTimeout(() => setToast(null), 3000); };
+
+            /* ---- totals ---- */
+            const curr = inv.currency;
+            const fmt = curr === "INR" ? money : moneyUS;
+            const calc = useMemo(() => {
+                const rows = items.map(i => ({ d: i.desc, a: Number(i.amt) || 0 }));
+                const subtotal = rows.reduce((s, x) => s + x.a, 0);
+                const rate = Number(inv.gstRate) || 0;
+                const gst = inv.gstEnabled ? subtotal * rate / 100 : 0;
+                return { rows, subtotal, rate, gst, total: subtotal + gst };
+            }, [items, inv.gstEnabled, inv.gstRate]);
+            const sym = CURRENCIES[curr].sym;
+
+            /* ---- items ---- */
+            const addItem = () => { const id = uid(); setItems(p => [...p, { id, desc: "", amt: "" }]); setFocusId(id); };
+            const updItem = (id, k, v) => setItems(p => p.map(i => i.id === id ? { ...i, [k]: v } : i));
+            const delItem = id => setItems(p => p.filter(i => i.id !== id));
+
+            /* ---- letterhead ---- */
+            const applyUrl = () => {
+                const u = lhInput.trim();
+                if (!u) { setLh(null); lsSet("lh", null); return; }
+                const im = new Image(); im.crossOrigin = "anonymous";
+                im.onload = () => { setLh(u); lsSet("lh", u); showToast("Letterhead applied"); };
+                im.onerror = () => showToast("Could not load that image. Check the link or upload the file.", true);
+                im.src = u;
+            };
+            const onFile = e => {
+                const f = e.target.files[0]; if (!f) return;
+                const r = new FileReader();
+                r.onload = () => { setLh(r.result); setLhInput(""); lsSet("lh", r.result.length < 4e6 ? r.result : null); showToast("Letterhead uploaded"); };
+                r.readAsDataURL(f); e.target.value = "";
+            };
+            const resetLh = () => {
+                setLh(null); setLhInput(""); setLhTop("13.7"); setLhHeight("72");
+                lsSet("lh", null); lsSet("lhTop", null); lsSet("lhHeight", null); showToast("Letterhead reset");
+            };
+
+            /* ---- export ---- */
+            const capture = async () => {
+                if (!window.html2canvas) await loadLib("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js");
+                await new Promise((resolve, reject) => {
+                    const img = new Image(); img.crossOrigin = "anonymous";
+                    img.onload = () => (img.decode ? img.decode().catch(() => { }) : Promise.resolve()).then(resolve);
+                    img.onerror = reject; img.src = bg;
+                });
+                await new Promise(r => requestAnimationFrame(() => r()));
+                return html2canvas(document.getElementById("export-invoice"), {
+                    scale: 2, useCORS: true, allowTaint: false, backgroundColor: "#ffffff",
+                    width: 720, height: 988, windowWidth: 1200, imageTimeout: 20000,
+                    onclone: doc => {
+                        const n = doc.getElementById("export-invoice");
+                        n.parentElement.style.cssText = "position:static;left:0;top:0;width:720px;height:988px";
+                        n.style.transform = "none";
+                    },
+                });
+            };
+            const doExport = async kind => {
+                setBusy(kind);
+                try {
+                    const c = await capture();
+                    if (kind === "png") {
+                        const a = document.createElement("a");
+                        a.download = "ZS-Invoice-" + inv.number + ".png"; a.href = c.toDataURL("image/png"); a.click();
+                        showToast("Image downloaded");
+                    } else {
+                        if (!window.jspdf) await loadLib("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
+                        const { jsPDF } = window.jspdf;
+                        const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+                        pdf.addImage(c.toDataURL("image/jpeg", .96), "JPEG", 0, 0, 210, 288);
+                        pdf.save("ZS-Invoice-" + inv.number + ".pdf");
+                        showToast("PDF downloaded");
+                    }
+                    setSheet(false);
+                } catch (e) {
+                    showToast((kind === "png" ? "Image" : "PDF") + " export failed. Check your connection and try again.", true);
+                } finally { setBusy(null); }
+            };
+            const doPrint = () => { setSheet(false); setTimeout(() => window.print(), 250); };
+
+            const goTab = t => { setTab(t); window.scrollTo({ top: 0 }); };
+
+            const invoiceProps = { inv, calc, fmt, bg, top: lhTop, height: lhHeight };
+            const spinner = <span className="spin" />;
+
+            return (
+                <>
+                    <div className="shell">
+                        <header className="appbar">
+                            <div className="logo">ZS</div>
+                            <div className="ttl">
+                                <h1>Invoice Generator</h1>
+                                <small>ZS Engineers & Contractors · No. {inv.number}</small>
+                            </div>
+                            <div className="desk-only">
+                                <button className="abtn solid" disabled={!!busy} onClick={() => doExport("pdf")}>{busy === "pdf" ? spinner : <Icon n="download" />} Download PDF</button>
+                                <button className="abtn" disabled={!!busy} onClick={() => doExport("png")}>{busy === "png" ? spinner : <Icon n="image" />} Image</button>
+                                <button className="abtn" onClick={doPrint}><Icon n="print" /> Print</button>
+                            </div>
+                        </header>
+
+                        <main className={"main tab-" + tab}>
+                            <div className="pane-edit">
+                                <Section icon="file" title="Invoice details" summary={"No. " + inv.number + " · " + (inv.date || "—")} defaultOpen>
+                                    <div className="row2">
+                                        <Field label="Invoice number"><input value={inv.number} onChange={set("number")} inputMode="text" /></Field>
+                                        <Field label="Invoice date"><input type="date" value={inv.date} onChange={set("date")} /></Field>
+                                    </div>
+                                </Section>
+
+                                <Section icon="user" title="Client / Bill to" summary={inv.client || "Add client"} defaultOpen>
+                                    <Field label="Client name"><input value={inv.client} onChange={set("client")} /></Field>
+                                    <Field label="Client address"><textarea value={inv.clientAddress} onChange={set("clientAddress")} /></Field>
+                                    <Field label="Client GSTIN"><input value={inv.clientGstin} onChange={set("clientGstin")} autoCapitalize="characters" /></Field>
+                                </Section>
+
+                                <Section icon="list" title="Items / Description of works" summary={items.length + " items · " + sym + " " + fmt(calc.subtotal)} defaultOpen>
+                                    {items.map((it, i) => (
+                                        <div className="item" key={it.id}>
+                                            <span className="num">{i + 1}</span>
+                                            <input placeholder="Description" aria-label="Description" value={it.desc}
+                                                autoFocus={it.id === focusId} onChange={e => updItem(it.id, "desc", e.target.value)} />
+                                            <button className="del" type="button" title="Remove item" onClick={() => delItem(it.id)}><Icon n="trash" /></button>
+                                            <div className="amt">
+                                                <i>{sym}</i>
+                                                <input type="number" min="0" step="0.01" inputMode="decimal" placeholder="Amount" aria-label="Amount"
+                                                    value={it.amt} onChange={e => updItem(it.id, "amt", e.target.value)} />
+                                            </div>
+                                        </div>
+                                    ))}
+                                    <button className="addbtn" type="button" onClick={addItem}><Icon n="plus" /> Add item</button>
+                                </Section>
+
+                                <Section icon="percent" title="Tax & totals" summary={(inv.gstEnabled ? "GST " + calc.rate + "%" : "No GST") + " · " + curr} defaultOpen>
+                                    <div className="switch-row">
+                                        <b>Apply GST</b>
+                                        <button type="button" role="switch" aria-checked={inv.gstEnabled}
+                                            className={"switch" + (inv.gstEnabled ? " on" : "")}
+                                            onClick={() => setInv(p => ({ ...p, gstEnabled: !p.gstEnabled }))} />
+                                    </div>
+                                    <div className={inv.gstEnabled ? "" : "dim"}>
+                                        <Field label="GST rate (%)"><input type="number" min="0" step="0.01" inputMode="decimal" value={inv.gstRate} onChange={set("gstRate")} /></Field>
+                                    </div>
+                                    <Field label="Currency">
+                                        <div className="seg">
+                                            {Object.keys(CURRENCIES).map(c => (
+                                                <button type="button" key={c} className={inv.currency === c ? "on" : ""}
+                                                    onClick={() => setInv(p => ({ ...p, currency: c }))}>{CURRENCIES[c].label}</button>
+                                            ))}
+                                        </div>
+                                    </Field>
+                                    <Field label="Amount in words (leave blank to auto-generate)">
+                                        <input value={inv.wordsOverride} onChange={set("wordsOverride")} placeholder="Auto-generated from total" />
+                                    </Field>
+                                    <div className="sumbox">
+                                        <div><span>Subtotal</span><span>{sym} {fmt(calc.subtotal)}</span></div>
+                                        {inv.gstEnabled && <div><span>GST @ {calc.rate}%</span><span>{sym} {fmt(calc.gst)}</span></div>}
+                                        <div className="t"><span>Total</span><span>{sym} {fmt(calc.total)}</span></div>
+                                    </div>
+                                </Section>
+
+                                <Section icon="bank" title="Account details" summary={inv.bank + " · " + inv.accountNo}>
+                                    <Field label="Beneficiary name"><input value={inv.beneficiary} onChange={set("beneficiary")} /></Field>
+                                    <Field label="Bank A/C No."><input value={inv.accountNo} onChange={set("accountNo")} inputMode="numeric" /></Field>
+                                    <Field label="Bank name"><input value={inv.bank} onChange={set("bank")} /></Field>
+                                    <Field label="IFSC code"><input value={inv.ifsc} onChange={set("ifsc")} autoCapitalize="characters" /></Field>
+                                </Section>
+
+                                <Section icon="building" title="Company / seller" summary="Address & GSTIN shown on right">
+                                    <Field label="Seller address / GSTIN (shown on right)"><textarea value={inv.sellerAddress} onChange={set("sellerAddress")} style={{ minHeight: 120 }} /></Field>
+                                </Section>
+
+                                <Section icon="image" title="Letterhead" summary={lh ? "Custom letterhead" : "Default letterhead"}>
+                                    <div className="lh-thumb" style={{ backgroundImage: 'url("' + String(bg).replace(/"/g, "%22") + '")' }} />
+                                    <Field label="Image link (URL)" hint="Link must allow cross-origin access for PDF/image export. If export fails, upload the file instead.">
+                                        <input type="url" placeholder="https://example.com/letterhead.png" value={lhInput}
+                                            onChange={e => setLhInput(e.target.value)} onBlur={() => lhInput.trim() !== (lh && /^https?:/.test(lh) ? lh : "") && applyUrl()} />
+                                    </Field>
+                                    <div className="btns">
+                                        <button className="btn" type="button" onClick={applyUrl}><Icon n="check" /> Apply link</button>
+                                        <label className="btn" style={{ margin: 0 }}><Icon n="upload" /> Upload
+                                            <input type="file" accept="image/png,image/jpeg,image/webp" onChange={onFile} /></label>
+                                    </div>
+                                    <div className="row2">
+                                        <Field label="Content starts at (% from top)">
+                                            <input type="number" step="0.1" min="0" max="60" inputMode="decimal" value={lhTop}
+                                                onChange={e => { setLhTop(e.target.value); lsSet("lhTop", e.target.value); }} />
+                                        </Field>
+                                        <Field label="Content height (%)">
+                                            <input type="number" step="0.1" min="20" max="100" inputMode="decimal" value={lhHeight}
+                                                onChange={e => { setLhHeight(e.target.value); lsSet("lhHeight", e.target.value); }} />
+                                        </Field>
+                                    </div>
+                                    <div className="btns"><button className="btn" type="button" onClick={resetLh}><Icon n="reset" /> Reset to default</button></div>
+                                </Section>
+                            </div>
+
+                            <div className="pane-preview"><PreviewPane invoiceProps={invoiceProps} /></div>
+                        </main>
+
+                        {/* mobile total bar + dock */}
+                        {tab === "edit" && (
+                            <div className="totalbar">
+                                <div><small>Total {inv.gstEnabled ? "(incl. GST)" : ""}</small><b>{sym} {fmt(calc.total)}</b></div>
+                                <button onClick={() => goTab("preview")}>Preview <Icon n="arrow" /></button>
+                            </div>
+                        )}
+                        <nav className="dock">
+                            <button className={tab === "edit" ? "on" : ""} onClick={() => goTab("edit")}><span className="pill"><Icon n="edit" /></span>Edit</button>
+                            <button className={tab === "preview" ? "on" : ""} onClick={() => goTab("preview")}><span className="pill"><Icon n="eye" /></span>Preview</button>
+                            <button onClick={() => setSheet(true)}><span className="pill"><Icon n="download" /></span>Export</button>
+                        </nav>
+
+                        {sheet && (
+                            <>
+                                <div className="scrim" onClick={() => !busy && setSheet(false)} />
+                                <div className="sheet" role="dialog" aria-label="Export invoice">
+                                    <div className="grip" />
+                                    <h3>Export invoice</h3>
+                                    <button className="act main-act" disabled={!!busy} onClick={() => doExport("pdf")}>
+                                        <span className="ai">{busy === "pdf" ? spinner : <Icon n="file" />}</span>
+                                        <div><b>Download PDF</b><span>A4 · ready to send</span></div>
+                                    </button>
+                                    <button className="act" disabled={!!busy} onClick={() => doExport("png")}>
+                                        <span className="ai">{busy === "png" ? spinner : <Icon n="image" />}</span>
+                                        <div><b>Download image</b><span>High-resolution PNG</span></div>
+                                    </button>
+                                    <button className="act" onClick={doPrint}>
+                                        <span className="ai"><Icon n="print" /></span>
+                                        <div><b>Print</b><span>Send to printer</span></div>
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                        {toast && <div className={"toast" + (toast.err ? " err" : "")}>{toast.msg}</div>}
+                    </div>
+
+                    {/* off-screen copy used for PDF / image export and printing */}
+                    <div className="export-host" aria-hidden="true">
+                        <Invoice id="export-invoice" {...invoiceProps} />
+                    </div>
+                </>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById("root")).render(<App />);
     </script>
 </body>
 
